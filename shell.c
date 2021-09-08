@@ -1,52 +1,106 @@
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#define STRLEN 100
-#define ARGC 10
-#define DELIM " \n\r"
+// PP and declerations:
+    #include <sys/wait.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <string.h>
 
-char *inner_functions[] = {
+    #define PATHLEN 300 
+    #define INPUTLEN 100
+    #define ARGC 10
+    #define DELIM " \n\r"
+
+    void get_args(char **args);
+    int execute_program(char **args);
+    int execute_regular_program(char **args);
+    void temp(char **args);
+
+// inner functions:
+    int cd_func(char **args)   {
+        // sanity:
+            if(!args) perror("cd_func0");
+            if(!args[1]) perror("cd_func1");
+
+        if(chdir(args[1]))
+            perror("cd_func2");
+    }
+
+char *inner_funcs_names[] = {
     "cd"
-}
+};
 
-char 
+int (*inner_funcs[]) (char**) = {
+    cd_func
+};
 
-void get_args(char **args);
 
-int main() {
-    int pid;
-    char *args[ARGC];
-    do {
-        get_args(args);
-        pid = fork();
-        if(pid == 0)    {
-           if(execvp(args[0],args) == -1) 
-                printf("error!!!\n");
-            exit(0);
+
+
+int execute_program(char **args) {
+    int i, pid;
+    int inner_funcs_N = sizeof(inner_funcs)/sizeof(int);
+
+    for(i=0; i < inner_funcs_N; i++)   {
+        if(strcmp(args[0], inner_funcs_names[i]) == 0)  {
+            return inner_funcs[i](args);
         }
-        wait(0);
-    } while(strcmp("q",args[0]));
+    }
+    
+    pid = fork();
+    if(pid == 0)    {
+        if(execvp(args[0],args) != 0)
+            perror("execute_program");
+        exit(1);
+    }
+    waitpid(pid,0,WUNTRACED);
     return 0;
 }
 
+// int execute_regular_program(char **args)   {
+//     int pid;
+//     pid = fork();
+
+//     for(int i=0; i<ARGC; i++)   {
+//         if(args[i])
+//             printf("args[%d] is: %s\n", i, args[i]);
+//     }
+
+//     if(pid == 0)    {
+//         if(execvp(args[0],args) != 0)
+//             perror("execute_program");
+//         exit(1);
+//     }
+//     waitpid(pid,0,WUNTRACED);
+//     return 0;
+// }
+
+int main() {
+    int pid, toExit = 0;
+    char *args[ARGC];
+    do {
+        get_args(args);
+        toExit = execute_program(args);
+    } while(!toExit);
+    return 0;
+}
 
 
 void get_args(char **args) {
     
     int i;
-    char str[STRLEN+5];
+    char str[INPUTLEN+5];
+    char path[PATHLEN];
 
     // clean
     for(i=0; i<ARGC; i++)   {
         args[i] = 0;
     }
-
-    fgets(str, STRLEN, stdin);
-    if(STRLEN < strlen(str))
-        printf("bad bad input string too long\n");
+    getcwd(path,PATHLEN);
+    printf("%s > ",path);
+    fgets(str, INPUTLEN, stdin);
+    if(INPUTLEN < strlen(str))
+        perror("input string too long\n");
 
     for(i=0; i<ARGC-1; i++)   {
         if(i == 0)  {
@@ -60,4 +114,6 @@ void get_args(char **args) {
     args[i] = 0;
 }
 
+void temp(char **args) {
 
+}
