@@ -26,12 +26,18 @@
             perror("cd_func2");
     }
 
+    int exit_func(char **args)   {
+        return 1;
+    }
+
 char *inner_funcs_names[] = {
-    "cd"
+    "cd",
+    "q"
 };
 
 int (*inner_funcs[]) (char**) = {
-    cd_func
+    cd_func,
+    exit_func
 };
 
 
@@ -112,8 +118,4 @@ void get_args(char **args) {
         if(args[i] == 0) break;
     }
     args[i] = 0;
-}
-
-void temp(char **args) {
-
 }
