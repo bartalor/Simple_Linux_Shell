@@ -63,23 +63,6 @@ int execute_program(char **args) {
     return 0;
 }
 
-// int execute_regular_program(char **args)   {
-//     int pid;
-//     pid = fork();
-
-//     for(int i=0; i<ARGC; i++)   {
-//         if(args[i])
-//             printf("args[%d] is: %s\n", i, args[i]);
-//     }
-
-//     if(pid == 0)    {
-//         if(execvp(args[0],args) != 0)
-//             perror("execute_program");
-//         exit(1);
-//     }
-//     waitpid(pid,0,WUNTRACED);
-//     return 0;
-// }
 
 int main() {
     int pid, toExit = 0;

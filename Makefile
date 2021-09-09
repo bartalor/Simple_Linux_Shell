@@ -1,5 +1,5 @@
-all: shell.c
-	gcc -Werror shell.c -o shell
+all: src/shell.c
+	gcc -Werror src/shell.c -o shell
 
 .phony: clean
 clean:
