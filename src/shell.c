@@ -5,6 +5,7 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
+    #include <dirent.h> 
 
     #define PATHLEN 300 
     #define INPUTLEN 100
@@ -19,11 +20,25 @@
 // inner functions:
     int cd_func(char **args)   {
         // sanity:
-            if(!args) perror("cd_func0");
-            if(!args[1]) perror("cd_func1");
+        if(!args[1]) perror("cd_func0");
 
         if(chdir(args[1]))
-            perror("cd_func2");
+            perror("cd_func1");
+    }
+
+    int ls_func(char **args)    {
+        char path[PATHLEN];
+        DIR *d;
+        struct dirent *dir;
+        getcwd(path,PATHLEN);
+        if(d = opendir(".")) {
+            while(dir = readdir(d)) {
+                if((dir->d_name[0] != '.') && (dir->d_name[0] != '\\'))
+                    printf("%s  ", dir->d_name);
+            }
+            printf("\n");
+            closedir(d);
+        }
     }
 
     int exit_func(char **args)   {
@@ -32,11 +47,13 @@
 
 char *inner_funcs_names[] = {
     "cd",
+    "ls",
     "q"
 };
 
 int (*inner_funcs[]) (char**) = {
     cd_func,
+    ls_func,
     exit_func
 };
 
@@ -45,8 +62,7 @@ int (*inner_funcs[]) (char**) = {
 
 int execute_program(char **args) {
     int i, pid;
-    int inner_funcs_N = sizeof(inner_funcs)/sizeof(int);
-
+    int inner_funcs_N = sizeof(inner_funcs)/sizeof(inner_funcs[0]);
     for(i=0; i < inner_funcs_N; i++)   {
         if(strcmp(args[0], inner_funcs_names[i]) == 0)  {
             return inner_funcs[i](args);
