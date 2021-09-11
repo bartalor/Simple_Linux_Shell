@@ -5,12 +5,21 @@
     #include <stdlib.h>
     #include <stdio.h>
     #include <string.h>
-    #include <dirent.h> 
+    #include <dirent.h>
+    #include <pwd.h>
+
+
 
     #define PATHLEN 300 
     #define INPUTLEN 350
     #define ARGNUM_MAX 10
     #define DELIM " \n\r"
+
+    #define ERROR(message) {\
+        printf("error: "message);\
+        printf("\n");\
+        exit(1);\
+    }
 
     void get_args(char* inbuf, char **args, int *argc);
     int execute_program(int argc, char **args);
@@ -21,10 +30,19 @@
 
     int cd_func(int argc, char **args)   {
         // sanity:
-        if(!args[1]) perror("cd_func0");
-
-        if(chdir(args[1]))
-            perror("cd_func1");
+        if(!args[1]) ERROR("cd_func0")
+        if (args[1][0] != '~')  {
+            if(chdir(args[1])) ERROR("cd_func1")
+        }
+        else    {
+            struct passwd *pw = getpwuid(getuid());
+            const char *homedir = pw->pw_dir;
+            if(chdir(homedir)) ERROR("cd_func2") // got to home directory
+            if(strlen(args[1]) == 2) ERROR("cd_func3")
+             if(2 < strlen(args[1]))
+                if(chdir(args[1]+2)) ERROR("cd_func4")
+        }
+        return 0;
     }
 
     int ls_func(int argc, char **args)    {
@@ -32,8 +50,6 @@
         DIR *d;
         struct dirent *dir;
         getcwd(path,PATHLEN);
-        printf("args[1]: %s\n",args[1]);
-        printf("args[0]: %s\n",args[0]);
         if(d = opendir(".")) {
             while((dir = readdir(d)) && (dir->d_name[0] != '\\')) {
                 if(!(argc == 2 && strcmp(args[1],"-a") == 0))
@@ -67,12 +83,8 @@ int (*inner_funcs[]) (int, char**) = {
 int execute_program(int argc, char **args) {
     int i, pid;
     int inner_funcs_N = sizeof(inner_funcs)/sizeof(inner_funcs[0]);
-    printf("args[1]: %s\n",args[1]);
-    printf("args[0]: %s\n",args[0]);
     for(i=0; i < inner_funcs_N; i++)   {
         if(strcmp(args[0], inner_funcs_names[i]) == 0)  {
-            printf("args[1]: %s\n",args[1]);
-            printf("args[0]: %s\n",args[0]);
             return (*inner_funcs[i])(argc,args);
         }
     }
@@ -80,7 +92,7 @@ int execute_program(int argc, char **args) {
     pid = fork();
     if(pid == 0)    {
         if(execvp(args[0],args) != 0)
-            perror("execute_program");
+            ERROR("execute_program")
         exit(1);
     }
 
@@ -112,7 +124,7 @@ void get_args(char *inbuf, char **args, int *argc) {
     printf("%s > ",path);
     fgets(inbuf, INPUTLEN, stdin);
     if(INPUTLEN < strlen(inbuf))
-        perror("input string too long\n");
+        ERROR("input string too long\n")
 
     for(i=0; i<ARGNUM_MAX-1; i++)   {
         if(i == 0)  {
